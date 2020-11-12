@@ -54,7 +54,7 @@ float luma(float r, float g, float b) {
 image rgb_to_grayscale(image im)
 {
     float sum;
-    float luma[] = {1,2,3}; // coefficients in a sum over the gamma-encoded channels
+    float luma[] = {0.299, 0.587, 0.114}; // coefficients in a sum over the gamma-encoded channels
     assert(im.c == 3);
     image gray = make_image(im.w, im.h, 1);
     // TODO Fill this in
@@ -78,6 +78,7 @@ void shift_image(image im, int c, float v)
 void clamp_image(image im)
 {
     // TODO Fill this in
+    
 }
 
 
