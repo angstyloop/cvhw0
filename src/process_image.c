@@ -70,15 +70,31 @@ image rgb_to_grayscale(image im)
     return gray;
 }
 
+// shift the intensity of channel c in each pixel by a constant amount
 void shift_image(image im, int c, float v)
 {
-    // TODO Fill this in
+    for (int x=0; x<im.w; x++) {
+      for (int y=0; y<im.h; y++) {
+        set_pixel(im, x, y, c, get_pixel(im, x, y, c) + v);
+      }
+    }
 }
 
+// clamp pixel values to [0,1]
 void clamp_image(image im)
 {
-    // TODO Fill this in
-    
+  float v;
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      for (int z=0; y<im.c; z++) {
+        v = get_pixel(im, x, y, z);
+        if (v<0)
+          set_pixel(im, x, y, z, 0);
+        else if (v>1)
+          set_pixel(im, x, y, z, 1);
+      }
+    }
+  }
 }
 
 
