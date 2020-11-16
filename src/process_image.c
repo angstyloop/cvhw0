@@ -86,7 +86,7 @@ void clamp_image(image im)
   float v;
   for (int x=0; x<im.w; x++) {
     for (int y=0; y<im.h; y++) {
-      for (int z=0; y<im.c; z++) {
+      for (int z=0; z<im.c; z++) {
         v = get_pixel(im, x, y, z);
         if (v<0)
           set_pixel(im, x, y, z, 0);
@@ -109,12 +109,54 @@ float three_way_min(float a, float b, float c)
     return (a < b) ? ( (a < c) ? a : c) : ( (b < c) ? b : c) ;
 }
 
+// compute hue from value, chroma, and (R,G,B) values
+// convention of our implementation is "C==0 => H==0"
+float hue(float V, float C, float R, float G, float B)
+{
+  float H_, H;
+  H_ = H = 0;
+  if (C > 0) {
+    if (V == R)
+      H_ = (G - B)/C;
+    else if (V == G)
+      H_ = (B - R)/C + 2;
+    else if (V == B)
+      H_ = (R - G)/C + 4;
+  }
+  if (H_ < 0)
+    H = H_/6 + 1;
+  else
+    H = H_/6;
+  return H;
+}
+
 void rgb_to_hsv(image im)
 {
-    // TODO Fill this in
+  float R, G, B, H, S, V, C, m;
+  R = G = B = H = V = C = m = 0;
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      // read rgb values
+      R = get_pixel(im, x, y, 0);
+      G = get_pixel(im, x, y, 1);
+      B = get_pixel(im, x, y, 2);
+
+      // computed HSV values
+      V = three_way_max(R, G, B);
+      m = three_way_min(R, G, B);
+      C = V - m;
+      S = V>0 ? C/V : 0;
+      H = hue(V, C, R, G, B);
+
+      // write hsv values instead of rgb
+      set_pixel(im, x, y, 0, H);
+      set_pixel(im, x, y, 1, S);
+      set_pixel(im, x, y, 2, V);
+    }
+  }
 }
 
 void hsv_to_rgb(image im)
 {
-    // TODO Fill this in
+
 }
