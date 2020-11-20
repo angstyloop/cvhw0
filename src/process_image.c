@@ -71,6 +71,15 @@ image rgb_to_grayscale(image im)
     return gray;
 }
 
+// scale the intensity of channel c in each pixel by a constant amount
+void scale_image(image im, int c, float v) {
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      set_pixel(im, x, y, c, v * get_pixel(im, x, y, c));
+    }
+  }
+}
+
 // shift the intensity of channel c in each pixel by a constant amount
 void shift_image(image im, int c, float v)
 {
