@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "image.h"
 
 // half-open intervals by default [l, r)
@@ -158,5 +159,49 @@ void rgb_to_hsv(image im)
 
 void hsv_to_rgb(image im)
 {
+  float R_, G_, B_, R, G, B, H, S, V, C, m, X;
+  R_ = G_ = B_ = R = G = B = H = S = V = C = m = 0;
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      H = get_pixel(im, x, y, 0);
+      S = get_pixel(im, x, y, 1);
+      V = get_pixel(im, x, y, 2);
+      C = V * S;
+      m = V - C;
+      X = C * (float)( 1 - fabs(fmod(6*H, 2) - 1) );
+      if (0/6.<=H && H<1/6.) {
+        R_ = C;
+        G_ = X;
+        B_ = 0;
+      } else if (1/6.<=H && H<2/6.) {
+        R_ = X;
+        G_ = C;
+        B_ = 0;
+      } else if (2/6.<=H && H<3/6.) {
+        R_ = 0;
+        G_ = C;
+        B_ = X;
+      } else if (3/6.<=H && H<4/6.) {
+        R_ = 0;
+        G_ = X;
+        B_ = C;
+      } else if (4/6.<=H && H<5/6.) {
+        R_ = X;
+        G_ = 0;
+        B_ = C;
+      } else if (5/6.<=H && H<6/6.) {
+        R_ = C;
+        G_ = 0;
+        B_ = X;
+      }
 
+      R = (R_ + m);
+      G = (G_ + m);
+      B = (B_ + m);
+
+      set_pixel(im, x, y, 0, R);
+      set_pixel(im, x, y, 1, G);
+      set_pixel(im, x, y, 2, B);
+    }
+  }
 }
