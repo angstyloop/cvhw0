@@ -46,6 +46,9 @@ hsv_to_rgb.argtypes = [IMAGE]
 shift_image = lib.shift_image
 shift_image.argtypes = [IMAGE, c_int, c_float]
 
+scale_image = lib.scale_image
+scale_image.argtypes = [IMAGE, c_int, c_float]
+
 clamp_image = lib.clamp_image
 clamp_image.argtypes = [IMAGE]
 
@@ -66,5 +69,5 @@ if __name__ == "__main__":
     im = load_image("data/dog.jpg")
     save_image(im, "hey")
 
-    
+
 

@@ -1,9 +1,6 @@
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include "image.h"
 
 // half-open intervals by default [l, r)
@@ -23,8 +20,10 @@ int clamp(int x, int r) {
   return clamp_to_range(x, 0, r);
 }
 
+typedef enum {false, true} boolean;
+
 // half open range [l, r)
-bool in_range(int x, int l, int r) {
+boolean in_range(int x, int l, int r) {
   return l<=x && x<r;
 }
 
@@ -48,6 +47,7 @@ image copy_image(image im)
     return copy;
 }
 
+// convention in video image processing
 float luma(float r, float g, float b) {
   return 0.299*r + 0.587*g + 114*b;
 }
