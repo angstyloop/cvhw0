@@ -214,3 +214,51 @@ void hsv_to_rgb(image im)
     }
   }
 }
+
+float gamma_compress_value(float u) {
+  return (u<=0.0031308) ? (float)(12.92*u) : (float)(1.055*pow(u, 1/2.4)-0.055);
+}
+
+float gamma_decompress_value(float u) {
+  return (u<=0.04045) ? (float)(u/12.92) : (float)pow((u+0.055)/1.055, 2.4);
+}
+
+float get_pixel_compressed(image im, int x, int y, int z) {
+  return gamma_compress_value(get_pixel(im, x, y, z));
+}
+
+float get_pixel_decompressed(image im, int x, int y, int z) {
+  gamma_decompress_value(get_pixel(im, x, y, z));
+}
+
+void gamma_compress_image(image im) {
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      for (int z=0; z<im.c; z++) {
+        set_pixel(im, x, y, z, get_pixel_compressed(im, x, y, z));
+      }
+    }
+  }
+}
+
+void gamma_decompress_image(image im) {
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      for (int z=0; z<im.c; z++) {
+        set_pixel(im, x, y, z, get_pixel_decompressed(im, x, y, z));
+      }
+    }
+  }
+}
+
+void ciexyz_to_srgb(image im) {}
+
+void srgb_to_ciexyz(image im) {}
+
+void cieluv_to_ciexyz(image im) {}
+
+void ciexyz_to_cieluv(image im) {}
+
+void cieluv_to_hcl(image im) {}
+
+void hcl_to_cieluv(image im) {}
