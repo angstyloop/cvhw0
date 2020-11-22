@@ -251,9 +251,73 @@ void gamma_decompress_image(image im) {
   }
 }
 
-void ciexyz_to_srgb(image im) {}
+void ciexyz_to_srgb(image im) {
 
-void srgb_to_ciexyz(image im) {}
+}
+
+struct srgb {
+  float r;
+  float g;
+  float b;
+};
+
+void load_srgb(struct srgb p, float r, float g, float b) {
+  p.r = r;
+  p.g = g;
+  p.b = b;
+}
+
+struct srgb make_srgb(float r, float g, float b) {
+  struct srgb p;
+  load_srgb(p);
+  return p;
+}
+
+struct ciexyz {
+  float x;
+  float y;
+  float z;
+};
+
+void load_ciexyz(struct ciexyz p, float x, float y, float z) {
+  p.x =x;
+  p.y = y;
+  p.z = z;
+}
+
+struct ciexyz make_ciexyz(float x, float y, float z) {
+  struct ciexyz p;
+  load_ciexyz(p, x, y, z);
+  return p;
+};
+
+struct ciexyz get_pixel_ciexyz(struct srgb p) {
+  float v[3] = {p.r, p.g, p.b};
+  float w[3];
+  static float M[3][3] = {0.41239080, 0.35758434, 0.18048079, 0.21263901, 0.71516868, 0.07219232, 0.01933082, 0.11919478, 0.95053215};
+  for (int i=0; i<3; i++) {
+    for (int j=0; j<3; j++) {
+      w[i] = M[i][j] * v[j];
+    }
+  }
+  return make_ciexyz(w[0], w[1], w[2]);
+}
+
+void srgb_to_ciexyz(image im) {
+  struct ciexyz p;
+  float v[3];
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      p = get_pixel_ciexyz(make_srgb(get_pixel(im, x, y, 0), get_pixel(im, x, y, 1), get_pixel(im, x, y, 2)));
+      v[0] = p.x;
+      v[1] = p.y;
+      v[2] = p.z;
+      for (int z=0; z<im.c; z++) {
+        set_pixel(im, x, y, z, v[z]);
+      }
+    }
+  }
+}
 
 void cieluv_to_ciexyz(image im) {}
 
