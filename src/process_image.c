@@ -251,41 +251,130 @@ void gamma_decompress_image(image im) {
   }
 }
 
-float* transform_ciexyz_to_srgb(float* v) {
-
-}
-
-void ciexyz_to_srgb(image im) {
-
-}
-
-float* transform_srgb_to_ciexyz(float* v) {
+float* transform_ciexyz_to_rgb(float* v) {
   float w[3];
-  static float M[3][3] = {0.41239080, 0.35758434, 0.18048079, 0.21263901, 0.71516868, 0.07219232, 0.01933082, 0.11919478, 0.95053215};
+  static float M[3][3] = {3.24096994, -1.53738318, -0.49861076, -0.96924364, 1.8759675, 0.04155506, 0.05563008, -0.20397696, 1.05697151};
   for (int i=0; i<3; i++) {
-    for (int j=0; j<3; j++)
+    for (int j=0; j<3; j++) {
       w[i] = M[i][j] * v[j];
+    }
   }
   memcpy(v, w, sizeof(float)*3);
   return v;
 }
 
-void srgb_to_ciexyz(image im) {
+void ciexyz_to_rgb(image im) {
   float v[3];
   for (int x=0; x<im.w; x++) {
     for (int y=0; y<im.h; y++) {
       for (int z=0; z<im.c; z++)
         v[z] = get_pixel(im, x, y, z);
-      transform_srgb_to_ciexyz(v);
+      transform_ciexyz_to_rgb(v);
       for (int z=0; z<im.c; z++)
         set_pixel(im, x, y, z, v[z]);
     }
   }
 }
 
-void cieluv_to_ciexyz(image im) {}
+float* transform_rgb_to_ciexyz(float* v) {
+  float u[3] = { 0, 0, 0 };
+  static float M[3][3] = { 0.41239080, 0.35758434, 0.18048079, 0.21263901, 0.71516868, 0.07219232, 0.01933082, 0.11919478, 0.95053215 };
+  for (int i=0; i<3; i++) {
+    for (int j=0; j<3; j++)
+      u[j] += M[i][j] * v[j];
+  }
+  memcpy(v, u, sizeof(float)*3);
+  return v;
+}
 
-void ciexyz_to_cieluv(image im) {}
+void rgb_to_ciexyz(image im) {
+  float v[3];
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      for (int z=0; z<im.c; z++)
+        v[z] = get_pixel(im, x, y, z);
+      transform_rgb_to_ciexyz(v);
+      for (int z=0; z<im.c; z++)
+        set_pixel(im, x, y, z, v[z]);
+    }
+  }
+}
+
+float* transform_ciexyz_to_uv_chromacity(float p[2], float q[3]) {
+  p[0] = 4*q[0]/(q[0]+15*q[1]+3*q[2]);
+  p[1] = 9*q[1]/(q[0]+15*q[1]+3*q[2]);
+  return p;
+}
+
+// p = cieluv coordinate vector (Luv), w = nominal white point, in XYZ.
+// in place, returns pointer
+float* transform_cieluv_to_ciexyz(float p[3], float w[3]) {
+  float q[3] = { 0, 0, 0 };
+  float uv[2] = { 0, 0 };
+  transform_ciexyz_to_uv_chromacity(uv, w);
+  float u_ = p[1]/(13*p[0])+uv[0];
+  float v_ = p[2]/(13*p[0])+uv[1];
+  q[1] = p[0] > 8 ? w[1]*pow((p[0]+16)/116.,3) : w[1]*p[0]*pow(13/29.,3);
+  q[0] = q[1]*9*u_/(4*v_);
+  q[2] = q[1]*(12-3*u_-20*v_)/(4*v_);
+  for (int i=0; i<3; i++){
+      for (int j=0; j<3; j++){
+          p[0] = w[0];
+          p[1] = w[1];
+          p[2] = w[2];
+      }
+  }
+  memcpy(p, q, sizeof(float)*3);
+  return p;
+}
+
+// transform an image from CIELUV color space to CIEXYZ color space, with respect to a nominal white point w in CIEXYZ color space
+void cieluv_to_ciexyz(image im, float w_r, float w_g, float w_b) {
+  float p[3];
+  float w[3];
+  w[0] = w_r;
+  w[1] = w_g;
+  w[2] = w_b;
+  transform_rgb_to_ciexyz(w);
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++){
+      for (int z=0; z<im.c; z++)
+        p[z] = get_pixel(im, x, y, z);
+      transform_cieluv_to_ciexyz(p, w);
+      for (int z=0; z<im.c; z++)
+        set_pixel(im, x, y, z, p[z]);
+    }
+  }
+}
+
+// p = ciexyz coordinate vector, w = nominal white point (in ciexyz)
+float* transform_ciexyz_to_cieluv(float p[3], float w[3]) {
+  float q[3] = { 0, 0, 0};
+  float uv[2] = { 0, 0 };
+  // set uv to the (u_,v_) chromacity of the given CIEXYZ point p
+  transform_ciexyz_to_uv_chromacity(uv, p);
+  // save these and reuse uv;
+  float u_ = uv[0];
+  float v_ = uv[1];
+  // set uv to the (u_,v_) chromacity of the CIEXYZ whitepoint w
+  transform_ciexyz_to_uv_chromacity(uv, w);
+  q[0] = p[1]/w[1] > pow(6/29.,3) ? 116*pow(p[1]/w[1],1/3.)-16 : pow(29/3.,3)*p[1]/w[1];
+  q[1] = 13*q[0]*(u_-uv[0]);
+  q[2] = 13*q[0]*(v_-uv[1]);
+  memcpy(p, q, sizeof(float)*3);
+  return p;
+}
+
+void ciexyz_to_cieluv(image im) {
+  float v[3];
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      for (int z=0; z<im.c; z++)
+        v[z] = get_pixel(im, x, y, z);
+      transform_ciexyz_to_cieluv(v);
+    }
+  }
+}
 
 void cieluv_to_hcl(image im) {}
 
