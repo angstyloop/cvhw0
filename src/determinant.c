@@ -1,4 +1,5 @@
 #include "determinant.h"
+#include <stdlib.h>
 
 float determinant(float* M, int n) {
   if (n==1) return M[0];

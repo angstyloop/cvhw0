@@ -11,9 +11,9 @@ typedef struct{
 float get_pixel(image im, int x, int y, int c);
 void set_pixel(image im, int x, int y, int c, float v);
 image copy_image(image im);
-image rgb_to_grayscale(image im);
-void rgb_to_hsv(image im);
-void hsv_to_rgb(image im);
+image convert_image_rgb_to_grayscale(image im);
+void convert_image_rgb_to_hsv(image im);
+void convert_image_hsv_to_rgb(image im);
 void scale_image(image im, int c, float v);
 void shift_image(image im, int c, float v);
 void clamp_image(image im);

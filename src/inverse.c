@@ -31,6 +31,17 @@ float* inverse(float* M, int n) {
   return inv;
 }
 
+float* multiply(float* M, float* v, int nrow, int ncol) {
+  float* u = malloc(nrow*sizeof(float));
+  for (int i=0; i<nrow; ++i) {
+    u[j] = 0;
+    for (int j=0; j<ncol; ++j) {
+      u[j] += M[i*ncol+j] * v[j];
+    }
+  }
+  return u;
+}
+
 void test_adjoint() {
   int n = 3;
   float M[9] = {

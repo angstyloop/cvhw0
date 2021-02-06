@@ -45,7 +45,7 @@ void test_set_pixel(){
     TEST(same_image(im, d));
 }
 
-void test_grayscale()
+void test_convert_image_grayscale()
 {
     image im = load_image("data/colorbar.png");
     image gray = rgb_to_grayscale(im);
@@ -71,20 +71,20 @@ void test_shift()
     TEST(within_eps(im.data[im.w*im.h+47] + .1,  c.data[im.w*im.h + 47]));
 }
 
-void test_rgb_to_hsv()
+void test_convert_image_rgb_to_hsv()
 {
     image im = load_image("data/dog.jpg");
-    rgb_to_hsv(im);
+    convert_image_rgb_to_hsv(im);
     image hsv = load_image("figs/dog.hsv.png");
     TEST(same_image(im, hsv));
 }
 
-void test_hsv_to_rgb()
+void test_convert_image_hsv_to_rgb()
 {
     image im = load_image("data/dog.jpg");
     image c = copy_image(im);
-    rgb_to_hsv(im);
-    hsv_to_rgb(im);
+    convert_image_rgb_to_hsv(im);
+    convert_image_hsv_to_rgb(im);
     TEST(same_image(im, c));
 }
 
@@ -101,9 +101,9 @@ void run_tests()
     test_set_pixel();
     test_copy();
     test_shift();
-    test_grayscale();
-    test_rgb_to_hsv();
-    test_hsv_to_rgb();
+    test_convert_image_grayscale();
+    test_convert_image_rgb_to_hsv();
+    test_convert_image_hsv_to_rgb();
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
 }
 
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
         run_tests();
     } else if (0 == strcmp(argv[1], "grayscale")){
         image im = load_image(in);
-        image g = rgb_to_grayscale(im);
+        image g = convert_image_rgb_to_grayscale(im);
         save_image(g, out);
         free_image(im);
         free_image(g);
