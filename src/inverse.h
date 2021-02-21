@@ -20,7 +20,7 @@
 
 float* adjoint(float* M, int n);
 float* inverse(float* M, int n);
-float* multiply(float* A, float* v, m, n);
+float* multiply(float* A, float* v, int m, int n);
 void test_adjoint();
 void test_inverse();
 

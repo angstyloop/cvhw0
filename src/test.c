@@ -103,6 +103,7 @@ void run_tests()
     test_shift();
     test_convert_image_grayscale();
     test_convert_image_rgb_to_hsv();
+    test_hue();
     test_convert_image_hsv_to_rgb();
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
 }

@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <math.h>
 #include "image.h"
-#include "inverse.h"
+#include "matrixlib.h"
 
 // half-open intervals by default [l, r)
 
@@ -41,8 +41,8 @@ void set_pixel(image im, int x, int y, int c, float v)
     im.data[x + im.w*y + im.w*im.h*c] = v;
 }
 
-float* get_tsv(im, x, y) {
-  float* v = malloc(im.c * sizeof(float));
+float* get_tsv(image im, int x, int y) {
+  float* v = calloc(im.c, sizeof(float));
   for (int z=0; z<im.c; z++) {
     v[z] = get_pixel(im, x, y, z);
   }
@@ -137,6 +137,8 @@ float three_way_min(float a, float b, float c)
 
 // compute hue from value, chroma, and (R,G,B) values
 // convention of our implementation is "C==0 => H==0"
+// based on https://en.wikipedia.org/wiki/HSL_and_HSV
+// (a bit different since all our rgb/hsv values are in [0,1])
 float hue(float V, float C, float R, float G, float B)
 {
   float H_, H;
@@ -153,6 +155,7 @@ float hue(float V, float C, float R, float G, float B)
     H = H_/6 + 1;
   else
     H = H_/6;
+
   return H;
 }
 
@@ -243,8 +246,8 @@ float get_pixel_compressed(image im, int x, int y, int z) {
   return gamma_compress_value(get_pixel(im, x, y, z));
 }
 
-float get_tsv_compressed(image im, int x, int y) {
-  float tsv_compressed = calloc(im.c, sizeof(float));
+float* get_tsv_compressed(image im, int x, int y) {
+  float* tsv_compressed = calloc(im.c, sizeof(float));
   for (int z=0; z<im.c; ++z) {
     tsv_compressed[z] = get_pixel_compressed(im, x, y, z);
   }
@@ -255,8 +258,8 @@ float get_pixel_decompressed(image im, int x, int y, int z) {
   return gamma_decompress_value(get_pixel(im, x, y, z));
 }
 
-float get_tsv_decompressed(image im, int x, int y, int z) {
-  float tsv_decompressed = calloc(im.c, sizeof(float));
+float* get_tsv_decompressed(image im, int x, int y) {
+  float* tsv_decompressed = calloc(im.c, sizeof(float));
   for (int z=0; z<im.c; ++z) {
     tsv_decompressed[z] = get_pixel_compressed(im, x, y, z);
   }
@@ -300,7 +303,7 @@ float* rgb_to_ciexyz_transform_matrix(float* r, float* g, float* b, float* w) {
   float* M = malloc(9*sizeof(float));
   for (int i=0; i<3; ++i) {
     for (int j=0; j<3; ++j) {
-      M[i*3+j] = S[(i*3+j)%3] * A[i*3+j]
+      M[i*3+j] = S[(i*3+j)%3] * A[i*3+j];
     }
   }
   free(S);
@@ -374,7 +377,7 @@ float* cieluv_to_ciexyz(float luv[3], float w[3]) {
 }
 
 // transform an image from CIELUV color space to CIEXYZ color space, with respect to a nominal white point w in CIEXYZ color space
-void convert_image_cieluv_to_ciexyz(image im, float* w) {
+void convert_image_cieluv_to_ciexyz(image im, float w[3]) {
   for (int x=0; x<im.w; x++) {
     for (int y=0; y<im.h; y++){
       float* tsv = get_tsv(im, x, y);
@@ -387,22 +390,22 @@ void convert_image_cieluv_to_ciexyz(image im, float* w) {
 
 // p = ciexyz coordinate vector, w = nominal white point (in ciexyz)
 float* ciexyz_to_cieluv(float xyz[3], float w[3]) {
-  float* luv = calloc(3, sizeof(float))
+  float* luv = calloc(3, sizeof(float));
   // set uv to the (u_,v_) chromacity of the given CIEXYZ point p
-  float uv[2] = ciexyz_to_uv_chromacity(uv, xyz);
+  float* uv = ciexyz_to_uv_chromacity(xyz);
   // save these and reuse uv;
   float u_ = uv[0];
   float v_ = uv[1];
   // set uv to the (u_,v_) chromacity of the CIEXYZ whitepoint w
-  ciexyz_to_uv_chromacity(uv, w);
+  ciexyz_to_uv_chromacity(w);
   luv[0] = xyz[1]/w[1] > pow(6/29.,3) ? 116*pow(xyz[1]/w[1],1/3.)-16 : pow(29/3.,3)*xyz[1]/w[1];
   luv[1] = 13*luv[0]*(u_-uv[0]);
   luv[2] = 13*luv[0]*(v_-uv[1]);
-  free(uv)
+  free(uv);
   return luv;
 }
 
-void convert_image_ciexyz_to_cieluv(image im) {
+void convert_image_ciexyz_to_cieluv(image im, float w[3]) {
   for (int x=0; x<im.w; x++) {
     for (int y=0; y<im.h; y++) {
       float* tsv = get_tsv(im, x, y);
@@ -413,10 +416,43 @@ void convert_image_ciexyz_to_cieluv(image im) {
   }
 }
 
-void cieluv_to_hcl(image im) {
-
+float* cieluv_to_hcl(float* luv) {
+  float* hcl = calloc(3, sizeof(float));
+  hcl[0] = atan2(luv[2], luv[1]);
+  hcl[1] = sqrt(pow(luv[1], 2) + pow(luv[2], 2));
+  hcl[2] = luv[0];
+  return hcl;
 }
 
-void hcl_to_cieluv(image im) {
+//keep going
+void convert_image_cieluv_to_hcl(image im) {
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      float* tsv_in = get_tsv(im, x, y);
+      float* tsv_out = cieluv_to_hcl(tsv_in);
+      free(tsv_in);
+      set_tsv(im, x, y, tsv_out);
+      free(tsv_out);
+    }
+  }
+}
 
+float* hcl_to_cieluv(float* hcl) {
+  float* luv = calloc(3, sizeof(float));
+  luv[0] = hcl[2];
+  luv[1] = hcl[1] * cos(hcl[0]);
+  luv[2] = hcl[1] * sin(hcl[0]);
+  return luv;
+}
+
+void convert_image_hcl_to_cieluv(image im) {
+  for (int x=0; x<im.w; x++) {
+    for (int y=0; y<im.h; y++) {
+      float* tsv_in = get_tsv(im, x, y);
+      float* tsv_out = hcl_to_cieluv(tsv_in);
+      free(tsv_in);
+      set_tsv(im, x, y, tsv_out);
+      free(tsv_out);
+    }
+  }
 }
