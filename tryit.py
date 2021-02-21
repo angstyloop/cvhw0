@@ -9,7 +9,7 @@ save_image(im, "dog_no_red")
 
 # 3. Grayscale image
 im = load_image("data/colorbar.png")
-graybar = rgb_to_grayscale(im)
+graybar = convert_image_rgb_to_grayscale(im)
 save_image(graybar, "graybar")
 
 # 4. Shift Image
@@ -25,10 +25,10 @@ save_image(im, "doglight_fixed")
 
 # 6-7. Colorspace and saturation
 im = load_image("data/dog.jpg")
-rgb_to_hsv(im)
+convert_image_rgb_to_hsv(im)
 shift_image(im, 1, .2)
 clamp_image(im)
-hsv_to_rgb(im)
+convert_image_hsv_to_rgb(im)
 save_image(im, "dog_saturated")
 
 

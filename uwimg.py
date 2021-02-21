@@ -33,15 +33,15 @@ get_pixel.restype = c_float
 set_pixel = lib.set_pixel
 set_pixel.argtypes = [IMAGE, c_int, c_int, c_int, c_float]
 
-rgb_to_grayscale = lib.rgb_to_grayscale
-rgb_to_grayscale.argtypes = [IMAGE]
-rgb_to_grayscale.restype = IMAGE
+convert_image_rgb_to_grayscale = lib.convert_image_rgb_to_grayscale
+convert_image_rgb_to_grayscale.argtypes = [IMAGE]
+convert_image_rgb_to_grayscale.restype = IMAGE
 
-rgb_to_hsv = lib.rgb_to_hsv
-rgb_to_hsv.argtypes = [IMAGE]
+convert_image_rgb_to_hsv = lib.convert_image_rgb_to_hsv
+convert_image_rgb_to_hsv.argtypes = [IMAGE]
 
-hsv_to_rgb = lib.hsv_to_rgb
-hsv_to_rgb.argtypes = [IMAGE]
+convert_image_hsv_to_rgb = lib.convert_image_hsv_to_rgb
+convert_image_hsv_to_rgb.argtypes = [IMAGE]
 
 shift_image = lib.shift_image
 shift_image.argtypes = [IMAGE, c_int, c_float]

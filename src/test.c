@@ -48,7 +48,7 @@ void test_set_pixel(){
 void test_convert_image_grayscale()
 {
     image im = load_image("data/colorbar.png");
-    image gray = rgb_to_grayscale(im);
+    image gray = convert_image_rgb_to_grayscale(im);
     image g = load_image("figs/gray.png");
     TEST(same_image(gray, g));
 }
@@ -103,7 +103,6 @@ void run_tests()
     test_shift();
     test_convert_image_grayscale();
     test_convert_image_rgb_to_hsv();
-    test_hue();
     test_convert_image_hsv_to_rgb();
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
 }
